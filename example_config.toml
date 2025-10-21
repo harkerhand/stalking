@@ -1,0 +1,12 @@
+[global]
+refresh = 1000
+display = "Plain"
+
+[[servers]]
+name = "web-01"
+host = "10.210.126.58"
+port = 22
+user = "harkerhand"
+password = "harkerhand"            # 可选，尽量用 key
+monitors = ["Mem", "Disk", "Cpu", "Net"]
+poll_interval_ms = 500
