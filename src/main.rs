@@ -33,7 +33,8 @@ async fn main() -> Result<()> {
     let ui_handle = match config.global.display {
         ui::DisplayKind::Tui => ui::spawn_tui(rx, config.global.refresh, shutdown_tx.clone(), config.servers.iter().map(
             |s| s.name.clone()).collect::<Vec<_>>()),
-        ui::DisplayKind::Plain => ui::spawn_plain(rx, config.global.refresh),
+        ui::DisplayKind::Plain => ui::spawn_plain(rx, config.global.refresh, shutdown_tx.clone(), config.servers.iter().map(
+            |s| s.name.clone()).collect::<Vec<_>>()),
     };
 
     let mut agent_handles = Vec::new();

@@ -1,6 +1,6 @@
 [global]
 refresh = 500
-display = "Tui"
+display = "Plain"
 
 [[servers]]
 name = "MAC"
