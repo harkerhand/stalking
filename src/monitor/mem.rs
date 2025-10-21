@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 /// Parsed subset of /proc/meminfo. Fields are in kB.
 #[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
 pub struct MemInfo {
     pub mem_total_kb: u64,
     pub mem_free_kb: u64,

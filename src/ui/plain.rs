@@ -22,13 +22,11 @@ pub fn spawn_plain(
 
         loop {
             // 1. 收集所有新事件
-            let mut server_list_changed = false;
             while let Ok(event) = rx.try_recv() {
                 match event {
                     MonitorEvent::Sample { server, kind, payload, .. } => {
                         if !server_states.contains_key(&server) {
                             server_list.push(server.clone());
-                            server_list_changed = true;
                         }
                         server_states.entry(server).or_default().insert(kind, payload);
                     }

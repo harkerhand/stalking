@@ -9,12 +9,13 @@ pub fn spawn_agent(
     server: ServerConfig,
     tx: Sender<MonitorEvent>,
     mut shutdown: Receiver<()>,
+    interval_ms: u64,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
         loop {
             tokio::select! {
                 _ = shutdown.recv() => {
-                    // 收到退出信号，优雅退出
+                    println!("Agent [{}] 收到退出信号", server.name);
                     break;
                 }
                 _ = async {
@@ -41,7 +42,7 @@ pub fn spawn_agent(
                             }
                         }
                     }
-                    tokio::time::sleep(Duration::from_millis(server.interval)).await;
+                    tokio::time::sleep(Duration::from_millis(interval_ms)).await;
                 } => {}
             }
         }

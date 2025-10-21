@@ -60,8 +60,6 @@ pub struct ServerConfig {
     pub privkey_path: Option<PathBuf>,
     pub passphrase: Option<String>,
     pub monitors: Vec<MonitorKind>,
-    #[serde(default = "default_interval")]
-    pub interval: u64,
 }
 
 impl ServerConfig {
@@ -84,21 +82,12 @@ impl ServerConfig {
                 self.name
             );
         }
-        if self.interval < 100 {
-            anyhow::bail!(
-                "Poll interval for server {} must be greater than 100 ms",
-                self.name
-            );
-        }
         Ok(())
     }
 }
 
 fn default_refresh() -> u64 {
     500
-}
-fn default_interval() -> u64 {
-    200
 }
 fn default_port() -> u16 {
     22

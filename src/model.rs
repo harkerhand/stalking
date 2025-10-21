@@ -89,6 +89,7 @@ impl Monitorable for MonitorPayload {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum MonitorEvent {
     Sample {
         server: String,

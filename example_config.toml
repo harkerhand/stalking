@@ -1,6 +1,6 @@
 [global]
 refresh = 500
-display = "Plain"
+display = "Tui"
 
 [[servers]]
 name = "MAC"
@@ -8,7 +8,6 @@ host = "10.210.126.58"
 user = "harkerhand"
 privkey_path = "C:\\Users\\harkerhand\\.ssh\\id_ed25519"
 monitors = ["Mem", "Disk", "Cpu", "Net"]
-poll_interval_ms = 200
 
 [[servers]]
 name = "ALI"
@@ -16,4 +15,3 @@ host = "47.97.243.238"
 user = "root"
 privkey_path = "C:\\Users\\harkerhand\\.ssh\\id_ed25519"
 monitors = ["Mem", "Disk", "Cpu", "Net"]
-poll_interval_ms = 200
