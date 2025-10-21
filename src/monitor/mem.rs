@@ -132,6 +132,7 @@ impl Monitorable for MemInfo {
         if let Some(swap_pct) = self.swap_used_percent() {
             out.push_str(&format!(", Swap Used: {:.2} %", swap_pct));
         }
+        out.push_str("\n");
         out
     }
 }

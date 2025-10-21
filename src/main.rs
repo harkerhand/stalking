@@ -12,7 +12,6 @@ use anyhow::Result;
 use clap::Parser;
 use monitor::Monitorable;
 use std::path::PathBuf;
-use tokio::select;
 
 #[derive(clap::Parser)]
 struct Cli {
@@ -30,23 +29,33 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     let config = Config::load_config(&cli.config_path)?;
     let (tx, rx) = tokio::sync::mpsc::channel(100);
+    let (shutdown_tx, _) = tokio::sync::broadcast::channel(1);
     let ui_handle = match config.global.display {
         ui::DisplayKind::Tui => ui::spawn_tui(rx, config.global.refresh),
         ui::DisplayKind::Plain => ui::spawn_plain(rx, config.global.refresh),
     };
 
+    let mut agent_handles = Vec::new();
     for server in config.servers {
-        agent::spawn_agent(server, tx.clone());
+        let shutdown_rx = shutdown_tx.subscribe();
+        let handle = agent::spawn_agent(server, tx.clone(), shutdown_rx);
+        agent_handles.push(handle);
     }
 
-    select! {
-        _ = tokio::signal::ctrl_c() => {
-            println!("收到 Ctrl+C，正在退出...");
+    tokio::select! {
+        res = ui_handle => {
+            res?;
         }
-        _ = ui_handle => {
-            println!("UI 线程已退出");
+        _ = tokio::signal::ctrl_c() => {
+            println!("收到退出信号，正在关闭...");
+            let _ = shutdown_tx.send(());
+            for handle in agent_handles {
+                let _ = handle.await;
+            }
+            println!("所有 agent 已退出，程序结束。");
         }
     }
+
 
     Ok(())
 }

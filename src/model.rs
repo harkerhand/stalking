@@ -2,7 +2,7 @@ use crate::monitor::{CpuInfo, DiskInfo, MemInfo, Monitorable, NetInfo};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Hash, PartialEq, Eq)]
 pub enum MonitorKind {
     Mem,
     Cpu,
