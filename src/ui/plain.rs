@@ -2,21 +2,38 @@ use crate::model::{MonitorEvent, MonitorKind, MonitorPayload};
 use crate::monitor::Monitorable;
 use std::collections::HashMap;
 use tokio::sync::mpsc::Receiver;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
-pub fn spawn_plain(mut rx: Receiver<MonitorEvent>, interval_ms: u64) -> tokio::task::JoinHandle<()> {
+pub fn spawn_plain(
+    mut rx: Receiver<MonitorEvent>,
+    interval_ms: u64,
+) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         // 保存每台服务器最新的监控样本
-        let mut server_states: HashMap<String, HashMap<MonitorKind, MonitorPayload>> = HashMap::new();
+        let mut server_states: HashMap<String, HashMap<MonitorKind, MonitorPayload>> =
+            HashMap::new();
 
         loop {
             // 1. 收集所有新事件
             while let Ok(event) = rx.try_recv() {
                 match event {
-                    MonitorEvent::Sample { server, kind, payload, .. } => {
-                        server_states.entry(server).or_default().insert(kind, payload);
+                    MonitorEvent::Sample {
+                        server,
+                        kind,
+                        payload,
+                        ..
+                    } => {
+                        server_states
+                            .entry(server)
+                            .or_default()
+                            .insert(kind, payload);
                     }
-                    MonitorEvent::Error { server, kind, error, .. } => {
+                    MonitorEvent::Error {
+                        server,
+                        kind,
+                        error,
+                        ..
+                    } => {
                         eprintln!("[{}][{:?}]: {}", server, kind, error);
                     }
                 }

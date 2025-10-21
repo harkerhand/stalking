@@ -7,6 +7,6 @@ name = "web-01"
 host = "10.210.126.58"
 port = 22
 user = "harkerhand"
-password = "harkerhand"            # 可选，尽量用 key
+privkey_path = "C:\\Users\\harkerhand\\.ssh\\id_ed25519"
 monitors = ["Mem", "Disk", "Cpu", "Net"]
 poll_interval_ms = 500

@@ -3,7 +3,7 @@ use crate::ui::DisplayKind;
 use anyhow::Result;
 use serde::Deserialize;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// 全局配置根结构体，从 config.toml 反序列化。
 #[derive(Debug, Deserialize)]
@@ -31,7 +31,6 @@ impl Config {
     }
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {
     /// UI 刷新间隔，单位毫秒
@@ -50,7 +49,6 @@ impl GlobalConfig {
     }
 }
 
-
 #[derive(Debug, Deserialize, Clone)]
 pub struct ServerConfig {
     pub name: String,
@@ -59,7 +57,8 @@ pub struct ServerConfig {
     pub port: u16,
     pub user: String,
     pub password: Option<String>,
-    pub key_path: Option<String>,
+    pub privkey_path: Option<PathBuf>,
+    pub passphrase: Option<String>,
     pub monitors: Vec<MonitorKind>,
     #[serde(default = "default_interval")]
     pub interval: u64,
@@ -80,16 +79,27 @@ impl ServerConfig {
             anyhow::bail!("Server user cannot be empty");
         }
         if self.monitors.is_empty() {
-            anyhow::bail!("At least one monitor must be specified for server {}", self.name);
+            anyhow::bail!(
+                "At least one monitor must be specified for server {}",
+                self.name
+            );
         }
         if self.interval < 100 {
-            anyhow::bail!("Poll interval for server {} must be greater than 100 ms", self.name);
+            anyhow::bail!(
+                "Poll interval for server {} must be greater than 100 ms",
+                self.name
+            );
         }
         Ok(())
     }
 }
 
-
-fn default_refresh() -> u64 { 500 }
-fn default_interval() -> u64 { 200 }
-fn default_port() -> u16 { 22 }
+fn default_refresh() -> u64 {
+    500
+}
+fn default_interval() -> u64 {
+    200
+}
+fn default_port() -> u16 {
+    22
+}

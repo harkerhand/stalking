@@ -57,7 +57,6 @@ impl NetInfo {
     }
 }
 
-
 impl Monitorable for NetInfo {
     fn exec_cmd(&self) -> &'static str {
         // 两次采样 + 分隔符

@@ -128,10 +128,7 @@ impl Monitorable for CpuInfo {
     }
 
     fn common_display(&self) -> String {
-        let mut s = format!(
-            "CPU Usage: {:.2}%\nTop 10 processes:\n",
-            self.usage_percent
-        );
+        let mut s = format!("CPU Usage: {:.2}%\nTop 10 processes:\n", self.usage_percent);
         for p in &self.top_processes {
             s.push_str(&format!(
                 "  {:<10} {:<20} {:>5.1}% CPU {:>5.1}% MEM\n",

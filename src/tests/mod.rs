@@ -1,17 +1,17 @@
-#[test]
-fn it_works() -> anyhow::Result<()> {
-    use crate::monitor::{CpuInfo, DiskInfo, MemInfo, Monitorable, NetInfo};
+#[tokio::test]
+async fn test_with_pubkey_echo() -> anyhow::Result<()> {
+    use super::*;
     use crate::ssh::SSHClient;
-    let client = SSHClient::with_pswd("10.210.126.58", "harkerhand", "harkerhand")?;
-    let mem = client.exec(MemInfo::default())?;
-    println!("{}", mem.common_display());
-    let disk = client.exec(DiskInfo::default())?;
-    println!("{}", disk.common_display());
-    let cpu = client.exec(CpuInfo::default())?;
-    println!("{}", cpu.common_display());
-    let net = client.exec(NetInfo::default())?;
-    println!("{}", net.common_display());
+    use std::path::PathBuf;
+    let host = "10.210.126.58";
+    let port = 22;
+    let user = "harkerhand";
+    let privkey_path = PathBuf::from("C:\\Users\\harkerhand\\.ssh\\id_ed25519");
+    let client = SSHClient::with_key(privkey_path, user, None, (host, port)).await;
+    assert!(client.is_ok());
+    let out = client?.client.execute("echo hello").await?;
+    assert_eq!(out.exit_status, 0);
+    assert_eq!(out.stdout.trim(), "hello");
 
-    panic!()
+    Ok(())
 }
-

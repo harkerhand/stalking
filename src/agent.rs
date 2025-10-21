@@ -18,10 +18,10 @@ pub fn spawn_agent(
                     break;
                 }
                 _ = async {
-                    let client = SSHClient::connect_from_config(&server).expect("failed to connect to server");
+                    let client = SSHClient::connect_from_config(&server).await.expect("failed to connect to server");
                     for kind in &server.monitors {
                         let payload = MonitorPayload::from(kind);
-                        match client.exec(payload) {
+                        match client.exec(payload).await {
                             Ok(payload) => {
                                 tx.send(MonitorEvent::Sample {
                                     server: server.name.clone(),

@@ -1,49 +1,58 @@
 use crate::Monitorable;
 use crate::config::ServerConfig;
 use anyhow::Result;
-use ssh2::Session;
-use std::io::Read;
-use std::net::TcpStream;
+use async_ssh2_tokio::{ServerCheckMethod, ToSocketAddrsWithHostname};
+use std::path::Path;
 
 pub struct SSHClient {
-    sess: Session,
+    pub(crate) client: async_ssh2_tokio::Client,
 }
 
 impl SSHClient {
-    pub fn with_pswd(host: &str, user: &str, pswd: &str) -> Result<Self> {
-        let tcp = TcpStream::connect(format!("{host}:22"))?;
-        let mut sess = Session::new()?;
-        sess.set_tcp_stream(tcp);
-        sess.handshake()?;
-        sess.userauth_password(user, pswd)?;
-        Ok(Self { sess })
-    }
-
-    pub fn with_pubkey(
-        host: &str,
-        user: &str,
-        pubkey_path: &str,
-        privkey_path: &str,
-        passphrase: Option<&str>,
+    pub async fn with_pswd(
+        pswd: &str,
+        user: impl AsRef<str>,
+        addrs: impl ToSocketAddrsWithHostname,
     ) -> Result<Self> {
-        let tcp = TcpStream::connect(format!("{host}:22"))?;
-        let mut sess = Session::new()?;
-        sess.set_tcp_stream(tcp);
-        sess.handshake()?;
-        sess.userauth_pubkey_file(
-            user,
-            Some(std::path::Path::new(pubkey_path)),
-            std::path::Path::new(privkey_path),
-            passphrase,
-        )?;
-        Ok(Self { sess })
+        let auth_method = async_ssh2_tokio::AuthMethod::with_password(pswd);
+        let client = async_ssh2_tokio::Client::connect(
+            addrs,
+            user.as_ref(),
+            auth_method,
+            ServerCheckMethod::NoCheck,
+        )
+        .await?;
+        Ok(Self { client })
     }
 
-    pub fn connect_from_config(config: &ServerConfig) -> Result<Self> {
-        if let (Some(pubkey_path), Some(privkey_path)) = (&config.key_path, &config.key_path) {
-            Self::with_pubkey(&config.host, &config.user, pubkey_path, privkey_path, None)
+    pub async fn with_key(
+        key_path: impl AsRef<Path>,
+        user: impl AsRef<str>,
+        passphrase: Option<&str>,
+        addrs: impl ToSocketAddrsWithHostname,
+    ) -> Result<Self> {
+        let auth_method = async_ssh2_tokio::AuthMethod::with_key_file(key_path, passphrase);
+        let client = async_ssh2_tokio::Client::connect(
+            addrs,
+            user.as_ref(),
+            auth_method,
+            ServerCheckMethod::NoCheck,
+        )
+        .await?;
+        Ok(Self { client })
+    }
+
+    pub async fn connect_from_config(config: &ServerConfig) -> Result<Self> {
+        if let Some(privkey_path) = &config.privkey_path {
+            Self::with_key(
+                privkey_path,
+                &config.user,
+                config.passphrase.as_deref(),
+                (config.host.as_str(), config.port),
+            )
+            .await
         } else if let Some(pswd) = &config.password {
-            Self::with_pswd(&config.host, &config.user, pswd)
+            Self::with_pswd(pswd, &config.user, (config.host.as_str(), config.port)).await
         } else {
             Err(anyhow::anyhow!(
                 "no authentication method provided for server {}",
@@ -52,12 +61,17 @@ impl SSHClient {
         }
     }
 
-    pub fn exec<T: Monitorable>(&self, mut monitor: T) -> Result<T> {
-        let mut channel = self.sess.channel_session()?;
-        channel.exec(monitor.exec_cmd())?;
-        let mut out = String::new();
-        channel.read_to_string(&mut out)?;
-        monitor.parse_from_str(&out)?;
-        Ok(monitor)
+    pub async fn exec<T: Monitorable>(&self, mut monitor: T) -> Result<T> {
+        let result = self.client.execute(monitor.exec_cmd()).await?;
+        match result.exit_status {
+            0 => {
+                monitor.parse_from_str(&result.stdout)?;
+                Ok(monitor)
+            }
+            code => Err(anyhow::anyhow!(
+                "command exited with non-zero status: {}",
+                code
+            )),
+        }
     }
 }

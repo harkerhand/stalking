@@ -62,7 +62,6 @@ impl MemInfo {
     }
 }
 
-
 impl Monitorable for MemInfo {
     fn exec_cmd(&self) -> &'static str {
         "cat /proc/meminfo"
@@ -124,7 +123,10 @@ impl Monitorable for MemInfo {
         let used_gb = self.used_bytes() as f64 / 1024.0 / 1024.0 / 1024.0;
         let used_pct = self.used_percent();
 
-        let mut out = format!("Total Memory: {:.2} GB, Used: {:.2} GB ({:.2} %)", total_gb, used_gb, used_pct);
+        let mut out = format!(
+            "Total Memory: {:.2} GB, Used: {:.2} GB ({:.2} %)",
+            total_gb, used_gb, used_pct
+        );
         if let Some(avail) = self.available_bytes() {
             let avail_gb = avail as f64 / 1024.0 / 1024.0 / 1024.0;
             out.push_str(&format!(", Available: {:.2} GB", avail_gb));
