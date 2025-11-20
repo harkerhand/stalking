@@ -43,7 +43,9 @@ impl SSHClient {
     }
 
     pub async fn connect_from_config(config: &ServerConfig) -> Result<Self> {
-        if let Some(privkey_path) = &config.privkey_path {
+        if let Some(pswd) = &config.password {
+            Self::with_pswd(pswd, &config.user, (config.host.as_str(), config.port)).await
+        } else if let Some(privkey_path) = &config.privkey_path {
             Self::with_key(
                 privkey_path,
                 &config.user,
@@ -51,9 +53,27 @@ impl SSHClient {
                 (config.host.as_str(), config.port),
             )
             .await
-        } else if let Some(pswd) = &config.password {
-            Self::with_pswd(pswd, &config.user, (config.host.as_str(), config.port)).await
         } else {
+            // Try default keys
+            let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE"));
+            if let Ok(home) = home {
+                let home_path = Path::new(&home);
+                let default_keys = ["id_ed25519", "id_rsa"];
+
+                for key in default_keys {
+                    let key_path = home_path.join(".ssh").join(key);
+                    if key_path.exists() {
+                        return Self::with_key(
+                            key_path,
+                            &config.user,
+                            config.passphrase.as_deref(),
+                            (config.host.as_str(), config.port),
+                        )
+                        .await;
+                    }
+                }
+            }
+
             Err(anyhow::anyhow!(
                 "no authentication method provided for server {}",
                 config.name

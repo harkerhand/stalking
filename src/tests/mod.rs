@@ -1,6 +1,5 @@
 #[tokio::test]
 async fn test_with_pubkey_echo() -> anyhow::Result<()> {
-    use super::*;
     use crate::ssh::SSHClient;
     use std::path::PathBuf;
     let host = "10.210.126.58";
